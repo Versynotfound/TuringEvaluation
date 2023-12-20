@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
  */
 public class StudentManager {
     private final List<Student> students = new ArrayList<>();
-    private final String STUDENT_FILE_PATH = "StudentPerformanceManagementSystem/src/StudentInfo";
     private final Scanner sc = new Scanner(System.in);
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy年MM月dd日 hh时mm分ss秒");
     private final Pattern namePattern = Pattern.compile("[A-Za-z0-9]");
@@ -82,15 +81,14 @@ public class StudentManager {
                     break;
                 }
 
-                for (Student stu : students) {
-                    if (studentId.equals(stu.getStudentId())) {
-                        System.out.println("该学号已存在，是否重新输入？y/Y重新输入，任意键退出");
-                        String reply = sc.next();
-                        if (reply.equals("y") || reply.equals("Y")) {
-                            continue;
-                        }
-                        break;
+                List<Student> students = FileManager.getStudentById(studentId);
+                if (!(students.isEmpty())) {
+                    System.out.println("该学号已存在，是否重新输入？y/Y重新输入，任意键退出");
+                    String reply = sc.next();
+                    if (reply.equals("y") || reply.equals("Y")) {
+                        continue;
                     }
+                    break;
                 }
 
                 student.setStudentId(studentId);
@@ -135,8 +133,8 @@ public class StudentManager {
         String startYear = id.substring(0, 4);
         // 获取专业代码...以此类推
         String majorCode = id.substring(4, 8);
-        char className = id.charAt(8);
-        char genderNumber = id.charAt(9);
+        String className = id.substring(8, 9);
+        String genderNumber = id.substring(9, 10);
         String classCode = id.substring(10);
 
         // 将信息注入学生对象
@@ -144,14 +142,15 @@ public class StudentManager {
         student.setClassName(className);
         student.setClassCode(classCode);
 
-        String gender = (genderNumber == '0') ? "女" : "男";
+        String gender = (genderNumber == "0") ? "女" : "男";
         student.setGender(gender);
 
         // 通过文档读取专业信息并注入学生对象，返回处理完的学生
         Student finalStudent = FileManager.getMajorInfo(student, majorCode);
 
+        // 得到学生创建时间
         LocalDateTime createdTime = LocalDateTime.now();
-
+        // 将学生创建时间格式化
         String result = formatter.format(createdTime);
         student.setCreatedTime(result);
 
@@ -166,12 +165,12 @@ public class StudentManager {
 
     private void queryStudent() throws Exception {
         // 非空校验
-        if (students.isEmpty()) {
+        String studentFilePath = "StudentPerformanceManagementSystem/src/StudentInfo";
+        if (FileManager.isFileEmpty(studentFilePath)) {
             System.out.println("[当前系统尚未录入任何学生信息，请先录入再进行操作]");
             Thread.sleep(300);
             return;
         }
-
 
         System.out.println("=============查询学生信息=============");
         System.out.println("1.通过学号查询");
@@ -217,13 +216,7 @@ public class StudentManager {
         }
 
         // 遍历集合，将包含该学号的学生放入另一个集合
-        ArrayList<Student> selectedStudents = new ArrayList<>();
-        for (Student stu : students) {
-            String stuId = stu.getStudentId();
-            if (stuId.contains(targetId)) {
-                selectedStudents.add(stu);
-            }
-        }
+        List<Student> selectedStudents = FileManager.getStudentById(targetId);
 
         if (selectedStudents.isEmpty()) {
             System.out.println("[未找到相关学生的记录]");
@@ -251,13 +244,7 @@ public class StudentManager {
                 continue;
             }
 
-            ArrayList<Student> selectedStudents = new ArrayList<>();
-            for (Student stu : students) {
-                String stuName = stu.getName();
-                if (stuName.contains(targetName)) {
-                    selectedStudents.add(stu);
-                }
-            }
+            List<Student> selectedStudents = FileManager.getStudentByName(targetName);
 
             if (selectedStudents.isEmpty()) {
                 System.out.println("[未找到相关学生的记录]");
@@ -272,7 +259,7 @@ public class StudentManager {
         }
     }
 
-    public void printStudentInfo(@NotNull ArrayList<Student> students) {
+    public void printStudentInfo(@NotNull List<Student> students) {
         System.out.println("共找到 " + students.size() + " 条学生信息 --->");
         System.out.println("学号            姓名   性别      专业      班级  班级序号    邮箱" +
                 "              信息建立时间              信息修改时间");
@@ -334,10 +321,9 @@ public class StudentManager {
 
     private void updateStudentInfo() throws Exception {
         System.out.println("==========修改学生个人信息==========");
-        String studentId;
         while (true) {
             System.out.print("请输入需要修改的学生的学号：");
-            studentId = sc.next();
+            String studentId = sc.next();
 
             if (!studentId.matches("20(0[0-9]|1[0-9]|2[0-3])0{3}[0-6][1-9][01][1-9]\\d")) {
                 System.out.println("[该学号不合法，请检查并重新输入正确的学号]");
@@ -345,8 +331,9 @@ public class StudentManager {
                 continue;
             }
 
-            Student student = getStudentById(studentId);
-            if (student == null) {
+            // 这里的查找方法支持模糊查询，但这里传入的是准确的数值，返回的集合长度要么是0要么是1
+            List<Student> students = FileManager.getStudentById(studentId);
+            if (students.isEmpty()) {
                 System.out.println("该生不存在。y/Y重新输入学号，任意键退出");
                 String reply = sc.next();
                 if ((reply.equals("y") || reply.equals("Y"))) {
@@ -355,6 +342,7 @@ public class StudentManager {
                 return;
             }
 
+            Student student = students.get(1);
             while (true) {
                 System.out.println("您需要修改学生" + student.getName() + "的：");
                 System.out.println("1.姓名");
@@ -456,8 +444,9 @@ public class StudentManager {
             }
 
             synchronized ("锁") {
-                Student student = getStudentById(studentId);
-                if (student == null) {
+                List<Student> students = FileManager.getStudentById(studentId);
+
+                if (students.isEmpty()) {
                     System.out.println("该生不存在。y/Y重新输入学号，任意键退出");
                     String reply = sc.next();
                     if (reply.equals("y") || reply.equals("Y")) {
@@ -465,13 +454,16 @@ public class StudentManager {
                     }
                     return;
                 }
+
+                Student student = students.get(1);
                 System.out.println("您确定删除学生 " + student.getName() + " 的相关信息吗？y/Y确认，任意键取消");
                 String reply = sc.next();
                 if (!(reply.equals("y") || reply.equals("Y"))) {
                     return;
                 }
 
-                //成绩处也要变化
+                // 成绩处要变化
+                FileManager.removeGradesFromFile(student.getStudentId());
                 FileManager.removeStudentFromFile(student);
                 students.remove(student);
             }
@@ -480,14 +472,5 @@ public class StudentManager {
             Thread.sleep(300);
             break;
         }
-    }
-
-    private @Nullable Student getStudentById(String id) {
-        for (Student student : students) {
-            if (id.equals(student.getStudentId())) {
-                return student;
-            }
-        }
-        return null;
     }
 }

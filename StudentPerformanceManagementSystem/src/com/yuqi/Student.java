@@ -1,11 +1,11 @@
 package com.yuqi;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * 学生类
  * 姓名、学号、性别、班级、邮箱、信息建立时间、最后修改时间
+ *
  * @author yuqi
  * @version 2.0
  * date 2023/12/16
@@ -14,7 +14,7 @@ public class Student {
     private String name;
     private String studentId;
     private String gender;
-    private char className;
+    private String className;
     private String classCode;
     private String major;
     private String email;
@@ -48,11 +48,11 @@ public class Student {
         this.gender = gender;
     }
 
-    public char getClassName() {
+    public String getClassName() {
         return className;
     }
 
-    public void setClassName(char className) {
+    public void setClassName(String className) {
         this.className = className;
     }
 

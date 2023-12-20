@@ -1,7 +1,7 @@
 package com.yuqi;
 
-import org.jetbrains.annotations.Nullable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -10,26 +10,30 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 主界面
+ *
  * @author yuqi
- * @version 2.0
+ * @version 3.0
  * date 2023/12/16
  */
 public class MainManager {
     private final List<Administrator> administrators = new ArrayList<>();
+    private static final String ADMINISTRATORS_FILE_PATH = "StudentPerformanceManagementSystem/src/Administrator";
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy年MM月dd日 hh时mm分ss秒");
     private final Scanner sc = new Scanner(System.in);
     private Administrator loginAdmin;
 
     public void start() throws Exception {
+
         System.out.println("欢迎使用学生成绩管理系统！");
         Thread.sleep(300);
-        System.out.println("==========学生成绩管理系统==========");
-        System.out.println("1.管理员登录");
-        System.out.println("2.管理员注册");
-        System.out.println("3.退出");
-        System.out.println("===================================");
-        Thread.sleep(300);
-
         while (true) {
+            System.out.println("==========学生成绩管理系统==========");
+            System.out.println("1.管理员登录");
+            System.out.println("2.管理员注册");
+            System.out.println("3.退出");
+            System.out.println("===================================");
+            Thread.sleep(300);
+
             System.out.println("请选择操作：");
             String command = sc.next();
             // 为了提升交互感使用了Thread.sleep(),这就是为什么右边频繁爆黄
@@ -49,7 +53,7 @@ public class MainManager {
     }
 
     private void logIn() throws Exception {
-        if (administrators.isEmpty()) {
+        if (FileManager.isFileEmpty(ADMINISTRATORS_FILE_PATH)) {
             System.out.println("[当前系统尚未录入任何管理员账号，请先注册]");
             Thread.sleep(300);
             return;
@@ -59,13 +63,15 @@ public class MainManager {
             System.out.print("请输入账户id：");
             String inputId = sc.next();
 
-            Administrator admin = getAccountById(inputId);
-            if (admin == null) {
+            if (!(FileManager.isFind(inputId, ADMINISTRATORS_FILE_PATH))) {
                 System.out.println("[账户不存在，请确认账户id并重新输入]");
                 Thread.sleep(300);
                 continue;
             }
-            if (admin.isLocked()) {
+
+            // debug!!!
+            Administrator admin = FileManager.getAdministratorById(inputId);
+            if (FileManager.isLocked(inputId)) {
                 System.out.println("[ " + admin.getName() + " 账户因密码输入错误次数过多已被锁定，" +
                         "请联系2098285024@qq.com确认身份并解锁。]");
                 Thread.sleep(500);
@@ -79,7 +85,7 @@ public class MainManager {
                 System.out.print("请输入密码：");
                 String inputPassword = sc.next();
                 if (count == 4) {
-                    admin.setLocked();
+                    FileManager.setLocked(admin.getAdministratorId(), admin);
                     System.out.println("[密码输入错误5次，账户已被锁定。请请联系2098285024@qq.com确认身份并解锁。]");
                     Thread.sleep(500);
                     System.out.println("按任意键退出...");
@@ -87,7 +93,7 @@ public class MainManager {
                     return;
                 }
 
-                if (!(admin.getPassword().equals(inputPassword))) {
+                if (!inputPassword.equals(FileManager.getPasswordFromFile(inputId))) {
                     System.out.println("密码错误，请重新输入。d/D退出");
                     String command = sc.next();
                     if (!(Objects.equals(command, "d") || Objects.equals(command, "D"))) {
@@ -97,6 +103,9 @@ public class MainManager {
                     return;
                 }
 
+                //debug!!!!!
+                System.out.println(loginAdmin);
+                System.out.println(admin);
                 loginAdmin = admin;
                 System.out.println("[登录成功！]");
                 Thread.sleep(200);
@@ -119,11 +128,7 @@ public class MainManager {
                 Thread.sleep(300);
                 continue;
             }
-            if (!(name.matches("[a-zA-Z0-9]"))) {
-                System.out.println("[账户名格式错误，请确保您的账户名仅包含数字和字母]");
-                Thread.sleep(300);
-                continue;
-            }
+
             admin.setName(name);
             break;
         }
@@ -148,11 +153,14 @@ public class MainManager {
             }
         }
 
-        LocalDate now = LocalDate.now();
-        admin.setCreateTime(now);
+        LocalDateTime createdTime = LocalDateTime.now();
 
-        administrators.add(admin);
+        // 格式化日期
+        String result = formatter.format(createdTime);
+        admin.setCreateTime(result);
+
         admin.setAdministratorId(creatId());
+        FileManager.addAdministratorIntoFile(admin);
         System.out.println("[管理员账户 " + admin.getName() + " 创建成功]");
         Thread.sleep(200);
         System.out.println("[您的账户id为：" + admin.getAdministratorId() + " ]");
@@ -171,26 +179,18 @@ public class MainManager {
                 id = result.toString();
             }
 
+            // 如果文件尚未录入任何账号直接返回id
             if (administrators.isEmpty()) {
                 return id;
             }
 
             // 判断该id是否已存在，如果存在则再次执行循环生成id
-            Administrator admin = getAccountById(id);
-            if (admin == null) {
+            if (!(FileManager.isFind(id, ADMINISTRATORS_FILE_PATH))) {
                 return id;
             }
         }
     }
 
-    public @Nullable Administrator getAccountById(String id) {
-        for (Administrator admin : administrators) {
-            if (id.equals(admin.getAdministratorId())) {
-                return admin;
-            }
-        }
-        return null;
-    }
 
     private void gradeManageMenu() throws Exception {
         StudentManager studentManager = new StudentManager();
@@ -198,16 +198,16 @@ public class MainManager {
         GradeManager gradeManager = new GradeManager();
         System.out.println("管理员" + loginAdmin.getName() + ",欢迎进入学生管理系统。");
         Thread.sleep(300);
-        System.out.println("==========学生成绩管理系统==========");
-        System.out.println("1.学生信息管理");
-        System.out.println("2.课程信息管理");
-        System.out.println("3.成绩信息管理");
-        System.out.println("7.个人信息");
-        System.out.println("8.退出登录");
-        System.out.println("===================================");
-        Thread.sleep(300);
-
         while (true) {
+            System.out.println("==========学生成绩管理系统==========");
+            System.out.println("1.学生信息管理");
+            System.out.println("2.课程信息管理");
+            System.out.println("3.成绩信息管理");
+            System.out.println("7.个人信息");
+            System.out.println("8.退出登录");
+            System.out.println("===================================");
+            Thread.sleep(300);
+
             System.out.println("请选择操作：");
             String command = sc.next();
 
@@ -240,9 +240,9 @@ public class MainManager {
     }
 
     private boolean administratorMenu() throws Exception {
-        int year = loginAdmin.getCreateTime().getYear();
-        int month = loginAdmin.getCreateTime().getMonthValue();
-        int day = loginAdmin.getCreateTime().getDayOfMonth();
+        int year = loginAdmin.getCreateLocalDateTime().getYear();
+        int month = loginAdmin.getCreateLocalDateTime().getMonthValue();
+        int day = loginAdmin.getCreateLocalDateTime().getDayOfMonth();
 
         while (true) {
             System.out.println("==============个人信息==============");
@@ -326,7 +326,7 @@ public class MainManager {
             }
 
             System.out.println("[账户 " + loginAdmin.getName() + " 注销成功，即将回到系统初始界面]");
-            administrators.remove(loginAdmin);
+            FileManager.removeAdminFromFile(loginAdmin);
             return true;
         }
     }
@@ -370,6 +370,7 @@ public class MainManager {
                     continue;
                 }
                 loginAdmin.setPassword(newPassword);
+                FileManager.updateAdministratorFile(loginAdmin);
                 System.out.println("修改密码成功！即将退出系统...");
                 Thread.sleep(400);
                 return;

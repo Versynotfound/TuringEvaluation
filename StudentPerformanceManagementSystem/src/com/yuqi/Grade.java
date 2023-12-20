@@ -17,6 +17,16 @@ public class Grade {
     private double score;
     private String scoreLevel;
 
+    public Grade() {
+    }
+
+    public Grade(String studentId, String courseId, double score, String scoreLevel) {
+        this.studentId = studentId;
+        this.courseId = courseId;
+        this.score = score;
+        this.scoreLevel = scoreLevel;
+    }
+
     private List<Student> students = new ArrayList<>();
 
     public String getStudentId() {

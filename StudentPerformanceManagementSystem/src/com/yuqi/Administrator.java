@@ -1,6 +1,6 @@
 package com.yuqi;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 管理员类
@@ -14,8 +14,21 @@ public class Administrator {
     private String administratorId;
     private String name;
     private String password;
-    private boolean locked = false;
-    private LocalDate createTime;
+    private String locked = "false";
+    private String createTime;
+    private LocalDateTime createLocalDateTime;
+
+    @Override
+    public String toString() {
+        return "Administrator{" +
+                "administratorId='" + administratorId + '\'' +
+                ", name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                ", locked='" + locked + '\'' +
+                ", createTime='" + createTime + '\'' +
+                ", createLocalDateTime=" + createLocalDateTime +
+                '}';
+    }
 
     public String getAdministratorId() {
         return administratorId;
@@ -41,19 +54,27 @@ public class Administrator {
         this.password = password;
     }
 
-    public boolean isLocked() {
-        return this.locked;
+    public String getLocked() {
+        return locked;
     }
 
-    public void setLocked() {
-        this.locked = true;
+    public void setLocked(String locked) {
+        this.locked = locked;
     }
 
-    public LocalDate getCreateTime() {
+    public void setCreateTime(String createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(LocalDate createTime) {
-        this.createTime = createTime;
+    public LocalDateTime getCreateLocalDateTime() {
+        return createLocalDateTime;
+    }
+
+    public void setCreateLocalDateTime(LocalDateTime createLocalDateTime) {
+        this.createLocalDateTime = createLocalDateTime;
     }
 }

@@ -13,8 +13,8 @@ import java.util.List;
 public class Course {
     private String courseId;
     private String name;
-    private double credit;
-    private int studyPeriod;
+    private String credit;
+    private String studyPeriod;
     private List<Grade> grades;
     private List<Student> students;
 
@@ -34,19 +34,19 @@ public class Course {
         this.name = name;
     }
 
-    public double getCredit() {
+    public String getCredit() {
         return credit;
     }
 
-    public void setCredit(double credit) {
+    public void setCredit(String credit) {
         this.credit = credit;
     }
 
-    public int getStudyPeriod() {
+    public String getStudyPeriod() {
         return studyPeriod;
     }
 
-    public void setStudyPeriod(int studyPeriod) {
+    public void setStudyPeriod(String studyPeriod) {
         this.studyPeriod = studyPeriod;
     }
 }
