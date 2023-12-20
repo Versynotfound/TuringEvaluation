@@ -1,7 +1,14 @@
 package com.yuqi;
+
+/**
+ * 主类
+ * @author yuqi
+ * @version 1.0
+ * date 2023/12/16
+ */
 public class Main {
     public static void main(String[] args) throws Exception {
-        GradeManager gradeManager = new GradeManager();
-        gradeManager.start();
+        MainManager mainManager = new MainManager();
+        mainManager.start();
     }
 }

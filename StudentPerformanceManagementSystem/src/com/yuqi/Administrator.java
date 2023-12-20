@@ -3,6 +3,9 @@ package com.yuqi;
 import java.time.LocalDate;
 
 /**
+ * 管理员类
+ * 管理员ID、管理员名称、密码、是否被锁定、管理员账号创建时间
+ *
  * @author yuqi
  * @version 1.0
  * date 2023/12/16
@@ -18,8 +21,8 @@ public class Administrator {
         return administratorId;
     }
 
-    public void setAdministratorId(String adminitratorId) {
-        this.administratorId = adminitratorId;
+    public void setAdministratorId(String administratorId) {
+        this.administratorId = administratorId;
     }
 
     public String getName() {
