@@ -1,4 +1,4 @@
-package com.yuqi;
+package com.yuqi.object;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,12 @@ public class Grade {
     private String scoreLevel;
 
     public Grade() {
+    }
+
+    public Grade(String studentId, String courseId, double score) {
+        this.studentId = studentId;
+        this.courseId = courseId;
+        this.score = score;
     }
 
     public Grade(String studentId, String courseId, double score, String scoreLevel) {

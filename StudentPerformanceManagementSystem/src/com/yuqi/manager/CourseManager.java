@@ -1,5 +1,6 @@
-package com.yuqi;
+package com.yuqi.manager;
 
+import com.yuqi.object.Course;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.regex.Pattern;
  * 课程管理类
  *
  * @author yuqi
- * @version 1.0
+ * @version 2.0
  * date 2023/12/18
  */
 public class CourseManager {
@@ -29,8 +30,7 @@ public class CourseManager {
             System.out.println("5.退出");
             System.out.println("===================================");
             Thread.sleep(300);
-
-
+            
             System.out.println("请选择操作：");
             String command = sc.next();
 
@@ -51,47 +51,48 @@ public class CourseManager {
     }
 
     private void addCourse() throws Exception {
-        Course course = new Course();
         System.out.println("==============添加课程==============");
+        String courseId;
+        String name;
+        String credit;
+        String studyPeriod;
+
         // 考虑到课程基本是一次性添加多个，所以套两个循环
         while (true) {
             while (true) {
                 System.out.print("请输入课程号：");
                 String inputId = sc.next();
-                // 只检验课程号是否是数字，因为不清楚标准
-                if (!(inputId.matches("\\d+"))) {
-                    System.out.println("[课程号格式错误，请重试]");
-                    Thread.sleep(200);
+
+                if (!(isCourseIdValid(inputId))) {
                     continue;
                 }
 
                 if (FileManager.isFileEmpty(COURSE_FILE_PATH)) {
-                    course.setCourseId(inputId);
+                    courseId = inputId;
                     break;
                 }
 
-                Course courseById = FileManager.getCourseById(inputId);
-                if (courseById != null) {
+                Course course = FileManager.getCourseById(inputId);
+                if (course != null) {
                     System.out.println("该课程号已存在，请勿重复录入。任意键返回");
                     sc.next();
                     return;
                 }
-
-                course.setCourseId(inputId);
+                courseId = inputId;
                 break;
             }
 
             while (true) {
                 System.out.print("请输入课程名称：");
-                String inputCourseName = sc.next();
-                Matcher courseNameMatcher = courseNamePattern.matcher(inputCourseName);
+                String inputName = sc.next();
+                Matcher courseNameMatcher = courseNamePattern.matcher(inputName);
                 // 一旦用户输入出现数字或字母则判定格式错误
                 if (courseNameMatcher.find()) {
                     System.out.println("[课程名称格式错误，请重试]");
                     Thread.sleep(200);
                     continue;
                 }
-                course.setName(inputCourseName);
+                name = inputName;
                 break;
             }
 
@@ -104,7 +105,7 @@ public class CourseManager {
 
                     // 假设学分最低为0分，最高为5分
                     if (inputCredit > 0 && inputCredit <= 5) {
-                        course.setCredit(String.valueOf(inputCredit));
+                        credit = String.valueOf(inputCredit);
                         break;
                     }
 
@@ -113,33 +114,31 @@ public class CourseManager {
                     int inputCredit = sc.nextInt();
 
                     if ((double) inputCredit > 0 && (double) inputCredit <= 5) {
-                        course.setCredit(String.valueOf(inputCredit));
+                        credit = String.valueOf(inputCredit);
                         break;
                     }
+                } else {
+                    System.out.println("[格式错误，请重试]");
+                    Thread.sleep(200);
                 }
-                System.out.println("[格式错误，请重试]");
-                Thread.sleep(200);
             }
 
             while (true) {
                 System.out.print("请录入该课学时：");
                 String inputPeriod = sc.next();
 
-                // 假设学时是大于0小于40的整数
-                if (!(inputPeriod.matches("[1-9]|[1-3][0-9]"))) {
-                    System.out.println("[格式错误，请重试]");
-                    Thread.sleep(200);
+                if (!(isStudyPeriodValid(inputPeriod))) {
                     continue;
                 }
 
-                course.setStudyPeriod(inputPeriod);
+                studyPeriod = inputPeriod;
 
-                // 将课程信息写入txt文件
+                Course course = new Course(name, courseId, credit, studyPeriod);
+
                 FileManager.addCourseIntoFile(course);
                 System.out.println("课程信息录入成功！y/Y继续录入，任意键返回");
                 String reply = sc.next();
 
-                // 如果用户输入不为y或Y则直接返回
                 if (!(reply.equals("y") || reply.equals("Y"))) {
                     return;
                 }
@@ -164,7 +163,6 @@ public class CourseManager {
             System.out.println("===================================");
             Thread.sleep(300);
 
-
             System.out.println("请选择指令：");
             String command = sc.next();
 
@@ -188,9 +186,7 @@ public class CourseManager {
             System.out.print("请输入详细课程号：");
             String inputId = sc.next();
 
-            if (!(inputId.matches("\\d+"))) {
-                System.out.println("[课程号格式错误，请重试]");
-                Thread.sleep(200);
+            if (!(isCourseIdValid(inputId))) {
                 continue;
             }
 
@@ -252,9 +248,7 @@ public class CourseManager {
             System.out.print("请输入您要修改的课程的课程号：");
             String inputId = sc.next();
 
-            if (!(inputId.matches("\\d+"))) {
-                System.out.println("[课程号格式错误，请重试]");
-                Thread.sleep(200);
+            if (!(isCourseIdValid(inputId))) {
                 continue;
             }
 
@@ -321,25 +315,24 @@ public class CourseManager {
             Thread.sleep(200);
         }
 
-        // 更新课程文件
         FileManager.updateCourseInfo(course);
+
+        System.out.println("[修改成功]");
+        Thread.sleep(200);
     }
 
-    private synchronized void updateCoursePeriod(Course course) throws InterruptedException {
+    private synchronized void updateCoursePeriod(Course course) throws Exception {
         System.out.println("该课程原学时为" + course.getCredit());
         while (true) {
             System.out.print("您要将其修改成：");
             String inputPeriod = sc.next();
 
-            if (!(inputPeriod.matches("[1-9]|[1-3][0-9]"))) {
-                System.out.println("[格式错误，请重试]");
-                Thread.sleep(200);
+            if (!(isStudyPeriodValid(inputPeriod))) {
                 continue;
             }
 
             course.setStudyPeriod(inputPeriod);
 
-            // 将课程信息写入txt文件
             FileManager.updateCourseInfo(course);
             System.out.println("[修改成功]");
             Thread.sleep(200);
@@ -365,6 +358,25 @@ public class CourseManager {
             sc.next();
             return;
         }
+    }
+
+    public static boolean isCourseIdValid(@NotNull String inputCourseId) throws Exception {
+        if (!(inputCourseId.matches("\\d+"))) {
+            System.out.println("[课程号格式错误，请重试]");
+            Thread.sleep(200);
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean isStudyPeriodValid(@NotNull String inputPeriod) throws Exception {
+        // 假设学时是大于0小于40的整数
+        if (!(inputPeriod.matches("[1-9]|[1-3][0-9]"))) {
+            System.out.println("[格式错误，请重试]");
+            Thread.sleep(200);
+            return false;
+        }
+        return true;
     }
 }
 

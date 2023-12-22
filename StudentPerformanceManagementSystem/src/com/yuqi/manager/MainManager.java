@@ -1,9 +1,8 @@
-package com.yuqi;
+package com.yuqi.manager;
 
+import com.yuqi.object.Administrator;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
@@ -12,11 +11,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * 主界面
  *
  * @author yuqi
- * @version 3.0
+ * @version 4.0
  * date 2023/12/16
  */
 public class MainManager {
-    private final List<Administrator> administrators = new ArrayList<>();
     private static final String ADMINISTRATORS_FILE_PATH = "StudentPerformanceManagementSystem/src/Administrator";
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy年MM月dd日 hh时mm分ss秒");
     private final Scanner sc = new Scanner(System.in);
@@ -58,6 +56,7 @@ public class MainManager {
             Thread.sleep(300);
             return;
         }
+
         System.out.println("============管理员登录=============");
         while (true) {
             System.out.print("请输入账户id：");
@@ -69,8 +68,8 @@ public class MainManager {
                 continue;
             }
 
-            // debug!!!
             Administrator admin = FileManager.getAdministratorById(inputId);
+            System.out.println(admin);
             if (FileManager.isLocked(inputId)) {
                 System.out.println("[ " + admin.getName() + " 账户因密码输入错误次数过多已被锁定，" +
                         "请联系2098285024@qq.com确认身份并解锁。]");
@@ -94,7 +93,7 @@ public class MainManager {
                 }
 
                 if (!inputPassword.equals(FileManager.getPasswordFromFile(inputId))) {
-                    System.out.println("密码错误，请重新输入。d/D退出");
+                    System.out.println("密码错误，请重新输入。任意键继续，d/D退出");
                     String command = sc.next();
                     if (!(Objects.equals(command, "d") || Objects.equals(command, "D"))) {
                         count++;
@@ -103,9 +102,6 @@ public class MainManager {
                     return;
                 }
 
-                //debug!!!!!
-                System.out.println(loginAdmin);
-                System.out.println(admin);
                 loginAdmin = admin;
                 System.out.println("[登录成功！]");
                 Thread.sleep(200);
@@ -120,32 +116,33 @@ public class MainManager {
 
         // 这里假设操作者拥有注册权限。
         System.out.println("============管理员注册=============");
+        String name;
+        String password;
         while (true) {
             System.out.print("请输入您的账户名称：");
-            String name = sc.next();
-            if (name.length() > 15) {
+            String inputName = sc.next();
+            if (inputName.length() > 15) {
                 System.out.println("[账户名过长，请重新设置。账户名应不大于15个字符]");
                 Thread.sleep(300);
                 continue;
             }
-
-            admin.setName(name);
+            name = inputName;
             break;
         }
 
         while (true) {
             System.out.print("请输入您的账户密码：");
-            String password = sc.next();
+            String inputPassword = sc.next();
 
-            if (!(password.matches("[a-zA-Z0-9]{3,}"))) {
+            if (!(inputPassword.matches("[a-zA-Z0-9]{3,}"))) {
                 System.out.println("[密码格式错误，请确保您的密码不少于3个字符且仅包含数字和字母]");
                 Thread.sleep(300);
                 continue;
             }
             System.out.print("请再次输入您的密码：");
             String confirmPassword = sc.next();
-            if (confirmPassword.equals(password)) {
-                admin.setPassword(password);
+            if (confirmPassword.equals(inputPassword)) {
+                admin.setPassword(inputPassword);
                 break;
             } else {
                 System.out.println("[两次密码不一致，请重试]");
@@ -180,7 +177,7 @@ public class MainManager {
             }
 
             // 如果文件尚未录入任何账号直接返回id
-            if (administrators.isEmpty()) {
+            if (FileManager.isFileEmpty(ADMINISTRATORS_FILE_PATH)) {
                 return id;
             }
 
@@ -285,11 +282,6 @@ public class MainManager {
 
             if (newName.length() > 15) {
                 System.out.println("[账户名过长，请重新设置。账户名应不大于15个字符]");
-                Thread.sleep(300);
-                continue;
-            }
-            if (!(newName.matches("[a-zA-Z0-9]"))) {
-                System.out.println("[账户名格式错误，请确保您的账户名仅包含数字和字母]");
                 Thread.sleep(300);
                 continue;
             }

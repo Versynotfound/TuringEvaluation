@@ -1,4 +1,4 @@
-package com.yuqi;
+package com.yuqi.object;
 
 import java.util.List;
 
@@ -20,9 +20,23 @@ public class Student {
     private String email;
     private String startYear;
     private String createdTime;
-    private String updatedTime;
-    private List<Grade> grades;
-    private List<Course> courses;
+    private String updatedTime = "尚未被修改";
+
+    public Student() {
+    }
+
+    public Student(String name, String studentId, String gender, String className, String classCode,
+                   String major, String email, String startYear, String createdTime) {
+        this.name = name;
+        this.studentId = studentId;
+        this.gender = gender;
+        this.className = className;
+        this.classCode = classCode;
+        this.major = major;
+        this.email = email;
+        this.startYear = startYear;
+        this.createdTime = createdTime;
+    }
 
     public String getName() {
         return name;

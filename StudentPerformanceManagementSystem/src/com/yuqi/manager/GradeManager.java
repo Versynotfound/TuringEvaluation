@@ -1,4 +1,9 @@
-package com.yuqi;
+package com.yuqi.manager;
+
+import com.yuqi.object.Course;
+import com.yuqi.object.Grade;
+import com.yuqi.object.Student;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,12 +16,11 @@ import java.util.stream.Collectors;
  * 成绩管理类
  *
  * @author yuqi
- * @version 1.0
+ * @version 2.0
  * date 2023/12/18
  */
 public class GradeManager {
     private final Scanner sc = new Scanner(System.in);
-    private final String GRADE_FILE_PATH = "StudentPerformanceManagementSystem/src/GradeInfo";
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy年MM月dd日 hh时mm分ss秒");
 
     public void start() throws Exception {
@@ -46,44 +50,48 @@ public class GradeManager {
     }
 
     private void updateStudentGrade() throws Exception {
-        System.out.println("============更新学生成绩============");
-        Student student = new Student();
-        Grade grade = new Grade();
-        while (true) {
-            System.out.print("请输入学生学号：");
-            String studentId = sc.next();
+        String STUDENT_FILE_PATH = "StudentPerformanceManagementSystem/src/StudentInfo";
+        if (FileManager.isFileEmpty(STUDENT_FILE_PATH)) {
+            System.out.println("[当前系统尚未录入任何学生信息，请先录入再进行操作]");
+            Thread.sleep(300);
+            return;
+        }
 
-            if (!studentId.matches("20(0[0-9]|1[0-9]|2[0-3])0{3}[0-6][1-9][01][1-9]\\d")) {
-                System.out.println("[学号格式错误，请检查并重新输入正确的学号]");
-                Thread.sleep(300);
+        System.out.println("============更新学生成绩============");
+        String studentId;
+        String courseId;
+        Student student = new Student();
+
+        while (true) {
+            System.out.print("请输入准确的学生学号：");
+            String inputStudentId = sc.next();
+
+            if (!(StudentManager.isStudentIdValid(inputStudentId))) {
+                continue;
             }
 
-            List<Student> students = FileManager.getStudentById(studentId);
-            if (students.isEmpty()) {
+            Student studentById = FileManager.getStudentById(inputStudentId);
+            if (studentById == null) {
                 System.out.println("未找到该学生。y/Y检查学号并重新输入，任意键返回");
                 String reply = sc.next();
                 if (reply.equals("y") || reply.equals("Y")) {
-                    return;
+                    continue;
                 }
-                continue;
+                return;
             }
-            student = students.get(1);
 
-            grade.setStudentId(studentId);
+            studentId = inputStudentId;
             break;
         }
 
         while (true) {
             System.out.print("请输入你要录入/更新成绩的课程号:");
-            String courseId = sc.next();
+            String inputCourseId = sc.next();
 
-            if (!(courseId.matches("\\d+"))) {
-                System.out.println("[课程号格式错误，请重试]");
-                Thread.sleep(200);
+            if (!(CourseManager.isCourseIdValid(inputCourseId))) {
                 continue;
             }
-
-            grade.setCourseId(courseId);
+            courseId = inputCourseId;
             break;
         }
 
@@ -96,6 +104,8 @@ public class GradeManager {
                 continue;
             }
 
+            Grade grade = new Grade(studentId, courseId, inputScore);
+
             grade.setScore(inputScore);
             if (inputScore >= 90) {
                 grade.setScoreLevel("优秀");
@@ -106,59 +116,63 @@ public class GradeManager {
             } else {
                 System.out.println("不及格");
             }
+
+            LocalDateTime updatedTime = LocalDateTime.now();
+            String result = formatter.format(updatedTime);
+            // 成绩更新在学生处也会显示更新
+            student.setUpdatedTime(result);
+            FileManager.updateStudentInfo(student);
+
+            FileManager.addGradeIntoFile(grade);
+            System.out.println("[更新成功！]");
+            Thread.sleep(200);
             break;
         }
-
-        LocalDateTime updatedTime = LocalDateTime.now();
-        String result = formatter.format(updatedTime);
-        student.setUpdatedTime(result);
-        FileManager.updateStudentInfo(student);
-
-        FileManager.addGradeIntoFile(grade);
-        System.out.println("[更新成功！]");
-        Thread.sleep(200);
     }
 
     private void queryStudentGrade() throws Exception {
+        String GRADE_FILE_PATH = "StudentPerformanceManagementSystem/src/GradeInfo";
         if (FileManager.isFileEmpty(GRADE_FILE_PATH)) {
             System.out.println("[当前系统尚未录入任何成绩信息]");
             Thread.sleep(300);
             return;
         }
-        System.out.println("============查询学生成绩============");
-        System.out.println("1.按科目查询");
-        System.out.println("2.查询单个学生成绩");
-        System.out.println("3.返回");
-        System.out.println("====================================");
-        Thread.sleep(300);
-        System.out.println("请选择：");
-        String command = sc.next();
 
-        switch (command) {
-            case "1" -> querySubjectGrades();
-            case "2" -> queryGradesByStudent();
-            case "3" -> {
-                return;
-            }
-            default -> {
-                System.out.println("[指令无效，请重新输入]");
-                Thread.sleep(300);
+        while (true) {
+            System.out.println("============查询学生成绩============");
+            System.out.println("1.按科目查询");
+            System.out.println("2.查询单个学生成绩");
+            System.out.println("3.返回");
+            System.out.println("====================================");
+            Thread.sleep(300);
+
+
+            System.out.println("请选择：");
+            String command = sc.next();
+
+            switch (command) {
+                case "1" -> querySubjectGrades();
+                case "2" -> queryGradesByStudent();
+                case "3" -> {
+                    return;
+                }
+                default -> {
+                    System.out.println("[指令无效，请重新输入]");
+                    Thread.sleep(300);
+                }
             }
         }
     }
 
     private void querySubjectGrades() throws Exception {
-        Course course = new Course();
-        List<Grade> grades = new ArrayList<>();
+        List<Grade> grades;
+        Course course;
         System.out.println("==============按科目查询==============");
-
         while (true) {
             System.out.print("请输入你要查询的课程的课程号：");
             String courseId = sc.next();
 
-            if (!(courseId.matches("\\d+"))) {
-                System.out.println("[课程号格式错误，请重试]");
-                Thread.sleep(200);
+            if(!(CourseManager.isCourseIdValid(courseId))){
                 continue;
             }
 
@@ -180,12 +194,9 @@ public class GradeManager {
         }
 
         System.out.println("您想要查询科目 " + course.getName() + " 的：");
-        // 写完之后才意识到既然可以从高到低排序那又有谁会展示毫无意义的全部学生成绩...anyWay写都写了
-        System.out.println("1.成绩按从高到低排序");
-        System.out.println("2.平均分");
-        System.out.println("3.各成绩段学生");
-        System.out.println("4.返回");
-        System.out.println("====================================");
+        System.out.println("1.平均分");
+        System.out.println("2.各成绩段学生");
+        System.out.println("3.成绩从高到低排序");
         Thread.sleep(300);
 
         while (true) {
@@ -194,7 +205,7 @@ public class GradeManager {
             switch (command) {
                 case "1" -> selectStudentByGradeLevel(grades);
                 case "2" -> averageScore(course.getCourseId(), grades);
-                case "3" -> sortGrades(grades);
+                case "3" -> sortByDescendingGrades(grades);
                 case "4" -> {
                     return;
                 }
@@ -227,7 +238,6 @@ public class GradeManager {
         System.out.println("2.良好");
         System.out.println("3.及格");
         System.out.println("4.不及格");
-
         Thread.sleep(300);
 
         while (true) {
@@ -257,26 +267,33 @@ public class GradeManager {
             return;
         }
 
-        // 使用冒泡排序使学生成绩按从高到低顺序输出
-        for (int i = 0; i < gradesInLevel.size() - 1; i++) {
-            for (int j = 0; j < gradesInLevel.size() - 1 - i; j++) {
-                Grade temp = gradesInLevel.get(j);
-                // 使用集合的set方法交换位置
-                gradesInLevel.set(j, gradesInLevel.get(j + 1));
-                gradesInLevel.set(j + 1, temp);
-            }
-        }
+        List<Grade> sortedGradesInLevel = sortGrades(grades);
 
         System.out.println("在分段 " + level + " 中的学生成绩如下-->");
         System.out.println("姓名    成绩");
-        for (Grade grade : gradesInLevel) {
-            Student student = FileManager.getStudentById(grade.getStudentId()).get(1);
+        for (Grade grade : sortedGradesInLevel) {
+            Student student = FileManager.getStudentById(grade.getStudentId());
             String name = student.getName();
             System.out.println(name + "\t" + grade.getScore());
         }
     }
 
-    private void sortGrades(List<Grade> grades) {
+    private void sortByDescendingGrades(List<Grade> grades) {
+        List<Grade> sortedGrades = sortGrades(grades);
+
+        int count = 0;
+        System.out.println("学生    成绩  成绩分段");
+        for (Grade grade : sortedGrades) {
+            Student student = FileManager.getStudentById(grade.getStudentId());
+            System.out.println(student.getName() + "\t" + grade.getScore() + "\t" + grade.getScoreLevel());
+            count++;
+        }
+
+        System.out.println("展示完毕，共 " + count + " 名学生。任意键退出...");
+        sc.next();
+    }
+
+    private List<Grade> sortGrades(List<Grade> grades) {
         // 冒泡排序
         for (int i = 0; i < grades.size() - 1; i++) {
             for (int j = 0; j < grades.size() - 1 - i; j++) {
@@ -286,23 +303,13 @@ public class GradeManager {
                 grades.set(j + 1, temp);
             }
         }
-
-        int count = 0;
-        System.out.println("学生    成绩  成绩分段");
-        for (Grade grade : grades) {
-            Student student = FileManager.getStudentById(grade.getStudentId()).get(1);
-            System.out.println(student.getName() + "\t" + grade.getScore() + "\t" + grade.getScoreLevel());
-            count++;
-        }
-
-        System.out.println("展示完毕，共 " + count + " 名学生。任意键退出...");
-        sc.next();
+        return grades;
     }
 
     private void queryGradesByStudent() throws Exception {
         Student student = new Student();
         while (true) {
-            System.out.print("请输入学生学号：");
+            System.out.print("请输入准确的学生学号：");
             String studentId = sc.next();
 
             if (!studentId.matches("20(0[0-9]|1[0-9]|2[0-3])0{3}[0-6][1-9][01][1-9]\\d")) {
@@ -310,8 +317,7 @@ public class GradeManager {
                 Thread.sleep(300);
             }
 
-            List<Student> students = FileManager.getStudentById(studentId);
-            student = students.get(1);
+            student = FileManager.getStudentById(studentId);
             break;
         }
 

@@ -1,5 +1,7 @@
 package com.yuqi;
 
+import com.yuqi.manager.MainManager;
+
 /**
  * 主类
  *

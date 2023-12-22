@@ -1,4 +1,4 @@
-package com.yuqi;
+package com.yuqi.object;
 
 import java.time.LocalDateTime;
 
@@ -26,7 +26,6 @@ public class Administrator {
                 ", password='" + password + '\'' +
                 ", locked='" + locked + '\'' +
                 ", createTime='" + createTime + '\'' +
-                ", createLocalDateTime=" + createLocalDateTime +
                 '}';
     }
 
@@ -72,9 +71,5 @@ public class Administrator {
 
     public LocalDateTime getCreateLocalDateTime() {
         return createLocalDateTime;
-    }
-
-    public void setCreateLocalDateTime(LocalDateTime createLocalDateTime) {
-        this.createLocalDateTime = createLocalDateTime;
     }
 }

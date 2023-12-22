@@ -1,4 +1,4 @@
-package com.yuqi;
+package com.yuqi.object;
 
 import java.util.List;
 
@@ -15,8 +15,16 @@ public class Course {
     private String name;
     private String credit;
     private String studyPeriod;
-    private List<Grade> grades;
-    private List<Student> students;
+
+    public Course() {
+    }
+
+    public Course(String courseId, String name, String credit, String studyPeriod) {
+        this.courseId = courseId;
+        this.name = name;
+        this.credit = credit;
+        this.studyPeriod = studyPeriod;
+    }
 
     public String getCourseId() {
         return courseId;
