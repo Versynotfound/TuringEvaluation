@@ -4,7 +4,6 @@ import com.yuqi.object.Administrator;
 import com.yuqi.object.Course;
 import com.yuqi.object.Grade;
 import com.yuqi.object.Student;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -85,13 +84,13 @@ public class FileManager {
 
     public static List<Student> getStudentsById(String id) {
         // 模糊查询版，使用了contains
-        Student stu = new Student();
         List<Student> students = new ArrayList<>();
 
         try (FileReader fr = new FileReader(STUDENT_FILE_PATH);
              BufferedReader br = new BufferedReader(fr)) {
             String line;
             while ((line = br.readLine()) != null) {
+                Student stu = new Student();
                 String[] stuInfo = line.split(",");
 
                 // 如果学号包含输入的id则判定为要找的学生
@@ -102,8 +101,8 @@ public class FileManager {
                     stu.setMajor(stuInfo[3]);
                     stu.setClassName(stuInfo[4]);
                     stu.setClassCode(stuInfo[5]);
-                    stu.setCreatedTime(stuInfo[6]);
-                    stu.setUpdatedTime(stuInfo[7]);
+                    stu.setEmail(stuInfo[6]);
+                    stu.setCreatedTime(stuInfo[7]);
                     students.add(stu);
                 }
             }
@@ -131,8 +130,8 @@ public class FileManager {
                     student.setMajor(stuInfo[3]);
                     student.setClassName(stuInfo[4]);
                     student.setClassCode(stuInfo[5]);
-                    student.setCreatedTime(stuInfo[6]);
-                    student.setUpdatedTime(stuInfo[7]);
+                    student.setEmail(stuInfo[6]);
+                    student.setCreatedTime(stuInfo[7]);
                     return student;
                 }
             }
@@ -142,7 +141,7 @@ public class FileManager {
         return null;
     }
 
-    public static @NotNull Administrator getAdministratorById(String id) {
+    public static Administrator getAdministratorById(String id) {
         Administrator admin = new Administrator();
         try (FileReader fr = new FileReader(ADMINISTRATORS_FILE_PATH);
              BufferedReader br = new BufferedReader(fr)) {
@@ -175,7 +174,7 @@ public class FileManager {
         }
     }
 
-    public static void addStudentIntoFile(@NotNull Student student) {
+    public static void addStudentIntoFile(Student student) {
         try (FileWriter fr = new FileWriter(STUDENT_FILE_PATH, true);
              PrintWriter pw = new PrintWriter(fr)) {
             pw.println(student.getStudentId() + "," + student.getName() + "," + student.getGender() +
@@ -200,14 +199,12 @@ public class FileManager {
 
                 System.out.println(studentInfo[0] + "\t" + studentInfo[1] + "\t" + studentInfo[2] +
                         "\t" + studentInfo[3] + "\t\t" + studentInfo[4] + "\t" + studentInfo[5] +
-                        "\t\t" + studentInfo[6] + "\t\t" + studentInfo[7] + "\t" + studentInfo[8]);
+                        "\t\t" + studentInfo[6] + "\t\t" + studentInfo[7]);
                 count++;
-
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         System.out.println("展示完毕，当前总共录入" + count + "名学生");
         System.out.println("按任意键退出...");
         SC.next();
@@ -252,6 +249,7 @@ public class FileManager {
                     line = updatedStudent.getStudentId() + "," +
                             updatedStudent.getName() + "," +
                             updatedStudent.getGender() + "," +
+                            updatedStudent.getMajor() + "," +
                             updatedStudent.getClassName() + "," +
                             updatedStudent.getEmail() + "," +
                             updatedStudent.getCreatedTime() + "," +
@@ -259,19 +257,16 @@ public class FileManager {
                 }
 
                 lines.add(line);
-
-                // 调用方法清空原文件内容并把新内容写入
-                updateFile(lines, STUDENT_FILE_PATH);
             }
+            // 调用方法清空原文件内容并把新内容写入
+            updateFile(lines, STUDENT_FILE_PATH);
         } catch (IOException e) {
             e.printStackTrace();
-
         }
     }
 
     public static List<Student> getStudentByName(String targetName) {
         // 模糊查询版
-        Student stu = new Student();
         List<Student> students = new ArrayList<>();
 
         try (FileReader fr = new FileReader(STUDENT_FILE_PATH);
@@ -280,16 +275,19 @@ public class FileManager {
             while ((line = br.readLine()) != null) {
                 String[] stuInfo = line.split(",");
 
-                // 如果学号包含输入的id则判定为要找的学生
-                if (stuInfo.length == 7 && stuInfo[1].contains(targetName)) {
+                // 如果姓名包含该字则判定为要找的学生
+                if (stuInfo[1].contains(targetName)) {
+                    // 创建新的 Student 对象
+                    Student stu = new Student();
                     stu.setStudentId(stuInfo[0]);
                     stu.setName(stuInfo[1]);
                     stu.setGender(stuInfo[2]);
                     stu.setMajor(stuInfo[3]);
                     stu.setClassName(stuInfo[4]);
                     stu.setClassCode(stuInfo[5]);
-                    stu.setCreatedTime(stuInfo[6]);
-                    stu.setUpdatedTime(stuInfo[7]);
+                    stu.setEmail(stuInfo[6]);
+                    stu.setCreatedTime(stuInfo[7]);
+                    stu.setUpdatedTime(stuInfo[8]);
                     students.add(stu);
                 }
             }
@@ -299,7 +297,8 @@ public class FileManager {
         return students;
     }
 
-    public static void removeStudentFromFile(@NotNull Student studentToDelete) {
+
+    public static void removeStudentFromFile(Student studentToDelete) {
 
         List<String> lines = new ArrayList<>();
 
@@ -335,7 +334,7 @@ public class FileManager {
         }
 
         // 将新内容写入
-        try (PrintWriter printWriter = new PrintWriter(new FileWriter(filePath, false))) {
+        try (PrintWriter printWriter = new PrintWriter(new FileWriter(filePath, true))) {
             for (String updatedLine : lines) {
                 printWriter.println(updatedLine);
             }
@@ -344,7 +343,7 @@ public class FileManager {
         }
     }
 
-    public static void addCourseIntoFile(@NotNull Course course) {
+    public static void addCourseIntoFile(Course course) {
         try (FileWriter fr = new FileWriter(COURSE_FILE_PATH, true);
              PrintWriter pw = new PrintWriter(fr)) {
             pw.println(course.getCourseId() + "," + course.getName() + "," + course.getCredit() +
@@ -383,7 +382,7 @@ public class FileManager {
         }
     }
 
-    public static void updateAdministratorFile(@NotNull Administrator admin) {
+    public static void updateAdministratorFile(Administrator admin) {
         String adminId = admin.getAdministratorId();
         try (BufferedReader reader = new BufferedReader(new FileReader(ADMINISTRATORS_FILE_PATH))) {
             String line;
@@ -402,15 +401,14 @@ public class FileManager {
                 }
 
                 lines.add(line);
-
-                updateFile(lines, ADMINISTRATORS_FILE_PATH);
             }
+            updateFile(lines, ADMINISTRATORS_FILE_PATH);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void removeAdminFromFile(@NotNull Administrator adminToDelete) {
+    public static void removeAdminFromFile(Administrator adminToDelete) {
         List<String> lines = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(ADMINISTRATORS_FILE_PATH))) {
@@ -515,7 +513,7 @@ public class FileManager {
                 String[] courseInfo = line.split(",");
 
                 // 如果课程名包含输入的汉字则判定为要找的课程
-                if (courseInfo.length == 4 && courseInfo[1].contains(targetName)) {
+                if (courseInfo[1].contains(targetName)) {
                     course.setCourseId(courseInfo[0]);
                     course.setName(courseInfo[1]);
                     course.setCredit(courseInfo[2]);
@@ -546,10 +544,9 @@ public class FileManager {
                 }
 
                 lines.add(line);
-
-                // 调用方法清空原文件内容并把新内容写入
-                updateFile(lines, COURSE_FILE_PATH);
             }
+            // 调用方法清空原文件内容并把新内容写入
+            updateFile(lines, COURSE_FILE_PATH);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -572,10 +569,9 @@ public class FileManager {
             while ((line = reader.readLine()) != null) {
                 // 文件中每行的格式为学号，课程号，成绩，成绩分段
                 String[] parts = line.split(",");
-                if (parts.length == 4) {
-                    Grade grade = new Grade(parts[0], parts[1], Double.parseDouble(parts[2]), parts[3]);
-                    grades.add(grade);
-                }
+
+                Grade grade = new Grade(parts[0], parts[1], Double.parseDouble(parts[2]), parts[3]);
+                grades.add(grade);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -598,5 +594,78 @@ public class FileManager {
         }
         // 因为一定要返回值所以加上了这一句。但是这个方法会直接在上面返回不会到达这里
         return null;
+    }
+
+    public static void removeCourseFromFile(String courseId) {
+        List<String> lines1 = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(COURSE_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines1.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 寻找并删除要删除的课程
+        for (int i = 0; i < lines1.size(); i++) {
+            String[] courseInfo = lines1.get(i).split(",");
+            if (courseInfo[0].equals(courseId)) {
+                lines1.remove(i);
+                break;
+            }
+        }
+
+        updateFile(lines1,COURSE_FILE_PATH);
+        List<String> lines2 = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(GRADE_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines2.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < lines2.size(); i++) {
+            String[] gradeInfo = lines2.get(i).split(",");
+            if (gradeInfo[0].equals(courseId)) {
+                lines2.remove(i);
+                break;
+            }
+        }
+
+        updateFile(lines2, GRADE_FILE_PATH);
+    }
+
+    public static List<Student> getStudentsByMajorName(String majorName) {
+        List<Student> students = new ArrayList<>();
+
+        try (FileReader fr = new FileReader(STUDENT_FILE_PATH);
+             BufferedReader br = new BufferedReader(fr)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Student stu = new Student();
+                String[] stuInfo = line.split(",");
+
+                // 如果学号包含输入的id则判定为要找的学生
+                if (stuInfo[3].contains(majorName)) {
+                    stu.setStudentId(stuInfo[0]);
+                    stu.setName(stuInfo[1]);
+                    stu.setGender(stuInfo[2]);
+                    stu.setMajor(stuInfo[3]);
+                    stu.setClassName(stuInfo[4]);
+                    stu.setClassCode(stuInfo[5]);
+                    stu.setEmail(stuInfo[6]);
+                    stu.setCreatedTime(stuInfo[7]);
+                    students.add(stu);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return students;
     }
 }

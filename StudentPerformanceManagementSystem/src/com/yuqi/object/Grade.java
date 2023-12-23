@@ -17,6 +17,17 @@ public class Grade {
     private double score;
     private String scoreLevel;
 
+    @Override
+    public String toString() {
+        return "Grade{" +
+                "studentId='" + studentId + '\'' +
+                ", courseId='" + courseId + '\'' +
+                ", score=" + score +
+                ", scoreLevel='" + scoreLevel + '\'' +
+                ", students=" + students +
+                '}';
+    }
+
     public Grade() {
     }
 

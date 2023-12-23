@@ -1,7 +1,6 @@
 package com.yuqi.manager;
 
 import com.yuqi.object.Student;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,17 +23,16 @@ public class StudentManager {
     private final Pattern namePattern = Pattern.compile("[A-Za-z0-9]");
 
     public void start() throws Exception {
-
-        System.out.println("============学生信息管理============");
-        System.out.println("1.添加学生");
-        System.out.println("2.查询学生");
-        System.out.println("3.修改学生信息");
-        System.out.println("4.删除学生");
-        System.out.println("5.退出");
-        System.out.println("===================================");
-        Thread.sleep(300);
-
         while (true) {
+            System.out.println("============学生信息管理============");
+            System.out.println("1.添加学生");
+            System.out.println("2.查询学生");
+            System.out.println("3.修改学生信息");
+            System.out.println("4.删除学生");
+            System.out.println("5.退出");
+            System.out.println("===================================");
+            Thread.sleep(300);
+
             System.out.println("请选择操作：");
             String command = sc.next();
 
@@ -63,7 +61,7 @@ public class StudentManager {
             System.out.print("请输入学生学号：");
             String inputId = sc.next();
 
-            if (!(isStudentIdValid(inputId))){
+            if (!(isStudentIdValid(inputId))) {
                 continue;
             }
 
@@ -136,31 +134,32 @@ public class StudentManager {
     }
 
     private void queryStudent() throws Exception {
-        // 非空校验
         if (FileManager.isFileEmpty(STUDENT_FILE_PATH)) {
             System.out.println("[当前系统尚未录入任何学生信息，请先录入再进行操作]");
             Thread.sleep(300);
             return;
         }
 
-        System.out.println("=============查询学生信息=============");
-        System.out.println("1.通过学号查询");
-        System.out.println("2.通过姓名查询");
-        System.out.println("3.展示所有学生个人信息");
-        System.out.println("4.返回");
-        System.out.println("===================================");
-        Thread.sleep(300);
-
         while (true) {
-            System.out.println("请选择操作：");
+            System.out.println("=============查询学生信息=============");
+            System.out.println("1.通过学号查询");
+            System.out.println("2.通过姓名查询");
+            System.out.println("3.根据专业号查询");
+            System.out.println("4.展示所有学生个人信息");
+            System.out.println("5.返回");
+            System.out.println("===================================");
+            Thread.sleep(300);
 
+
+            System.out.println("请选择操作：");
             String command = sc.next();
 
             switch (command) {
                 case "1" -> queryStudentById();
                 case "2" -> queryStudentByName();
-                case "3" -> FileManager.showAllStudent();
-                case "4" -> {
+                case "3" -> queryStudentByMajorId();
+                case "4" -> FileManager.showAllStudent();
+                case "5" -> {
                     return;
                 }
                 default -> {
@@ -229,7 +228,40 @@ public class StudentManager {
         }
     }
 
-    public void printStudentInfo(@NotNull List<Student> students) {
+    private void queryStudentByMajorId() throws Exception {
+        System.out.println("============通过专业号查询============");
+        String majorId;
+        String majorName;
+        while (true) {
+            System.out.print("请输入准确的专业号：");
+            String inputId = sc.next();
+
+            if (!(inputId.matches("000[0-6]"))) {
+                System.out.println("[专业号格式错误，请重试]");
+                Thread.sleep(200);
+                continue;
+            }
+
+            majorId = inputId;
+
+            majorName = FileManager.getMajorInfo(majorId);
+            break;
+        }
+
+        List<Student> selectedStudents = FileManager.getStudentsByMajorName(majorName);
+
+        if (selectedStudents.isEmpty()) {
+            System.out.println("[未找到相关学生的记录]");
+            Thread.sleep(300);
+        } else {
+            // 调用方法打印符合条件的学生的信息
+            printStudentInfo(selectedStudents);
+        }
+        System.out.println("按任意键退出...");
+        sc.next();
+    }
+
+    public void printStudentInfo(List<Student> students) {
         System.out.println("共找到 " + students.size() + " 条学生信息 --->");
         System.out.println("学号            姓名   性别      专业      班级  班级序号    邮箱" +
                 "              信息建立时间              信息修改时间");
@@ -252,7 +284,7 @@ public class StudentManager {
             System.out.print("请输入需要修改的学生的学号：");
             String inputId = sc.next();
 
-            if (!(isStudentIdValid(inputId))){
+            if (!(isStudentIdValid(inputId))) {
                 continue;
             }
 
@@ -315,9 +347,9 @@ public class StudentManager {
             student.setName(newName);
 
             // 更新修改时间
-            LocalDateTime updatedTime = LocalDateTime.now();
-            String result = formatter.format(updatedTime);
-            student.setUpdatedTime(result);
+            LocalDateTime updatedLocalDateTime = LocalDateTime.now();
+            String updatedTime = formatter.format(updatedLocalDateTime);
+            student.setUpdatedTime(updatedTime);
             // 将更新后信息写入文件
             FileManager.updateStudentInfo(student);
             break;
@@ -329,15 +361,19 @@ public class StudentManager {
             System.out.print("请输入新邮箱：");
             String newEmail = sc.next();
 
+            if (!(isEmailValid(newEmail))) {
+                continue;
+            }
 
-
-            student.setName(newEmail);
+            student.setEmail(newEmail);
 
             LocalDateTime updatedTime = LocalDateTime.now();
             String result = formatter.format(updatedTime);
             student.setUpdatedTime(result);
             FileManager.updateStudentInfo(student);
-
+            System.out.println("[修改成功！]");
+            Thread.sleep(200);
+            break;
         }
     }
 
@@ -371,7 +407,7 @@ public class StudentManager {
                     return;
                 }
 
-                // 成绩处要变化
+                // 成绩处变化
                 FileManager.removeGradesFromFile(student.getStudentId());
                 FileManager.removeStudentFromFile(student);
             }
@@ -382,7 +418,7 @@ public class StudentManager {
         }
     }
 
-    public boolean isNameValid(@NotNull String inputName) throws Exception {
+    public boolean isNameValid(String inputName) throws Exception {
         // 这里拦截了数字和字母但不知道怎么拦截#￥%&等乱七八糟的情况
         Matcher nameMatcher = namePattern.matcher(inputName);
         // 中国公民姓名长度最大为六个汉字
@@ -394,7 +430,7 @@ public class StudentManager {
         return true;
     }
 
-    public static boolean isStudentIdValid(@NotNull String inputId) throws Exception {
+    public static boolean isStudentIdValid(String inputId) throws Exception {
         /* 该系统只能录入2000级之后23级及之前的学生信息
          * 专业编号为0000到0006
          * 班级为1到9班
@@ -408,7 +444,7 @@ public class StudentManager {
         return true;
     }
 
-    public boolean isEmailValid(@NotNull String inputEmail) throws Exception {
+    public boolean isEmailValid(String inputEmail) throws Exception {
         // 邮箱@前是两位以上的数字或字母，@后为两位以上二十位以下的数字或字母，加上点以及二位以上十位以下一级或二级域名
         if (!(inputEmail.matches("\\w{2,}@\\w{2,20}(\\.\\w{2,10}){1,2}"))) {
             System.out.println("[邮箱格式有误，请检查并重新输入]");

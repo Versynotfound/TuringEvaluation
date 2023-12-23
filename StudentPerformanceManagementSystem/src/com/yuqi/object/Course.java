@@ -16,6 +16,16 @@ public class Course {
     private String credit;
     private String studyPeriod;
 
+    @Override
+    public String toString() {
+        return "Course{" +
+                "courseId='" + courseId + '\'' +
+                ", name='" + name + '\'' +
+                ", credit='" + credit + '\'' +
+                ", studyPeriod='" + studyPeriod + '\'' +
+                '}';
+    }
+
     public Course() {
     }
 

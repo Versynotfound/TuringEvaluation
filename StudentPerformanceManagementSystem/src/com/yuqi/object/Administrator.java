@@ -16,7 +16,6 @@ public class Administrator {
     private String password;
     private String locked = "false";
     private String createTime;
-    private LocalDateTime createLocalDateTime;
 
     @Override
     public String toString() {
@@ -27,6 +26,16 @@ public class Administrator {
                 ", locked='" + locked + '\'' +
                 ", createTime='" + createTime + '\'' +
                 '}';
+    }
+
+    public Administrator() {
+    }
+
+    public Administrator(String administratorId, String name, String password, String createTime) {
+        this.administratorId = administratorId;
+        this.name = name;
+        this.password = password;
+        this.createTime = createTime;
     }
 
     public String getAdministratorId() {
@@ -67,9 +76,5 @@ public class Administrator {
 
     public String getCreateTime() {
         return createTime;
-    }
-
-    public LocalDateTime getCreateLocalDateTime() {
-        return createLocalDateTime;
     }
 }

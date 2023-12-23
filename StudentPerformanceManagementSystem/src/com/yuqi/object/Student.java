@@ -1,7 +1,5 @@
 package com.yuqi.object;
 
-import java.util.List;
-
 /**
  * 学生类
  * 姓名、学号、性别、班级、邮箱、信息建立时间、最后修改时间
@@ -21,6 +19,22 @@ public class Student {
     private String startYear;
     private String createdTime;
     private String updatedTime = "尚未被修改";
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "name='" + name + '\'' +
+                ", studentId='" + studentId + '\'' +
+                ", gender='" + gender + '\'' +
+                ", className='" + className + '\'' +
+                ", classCode='" + classCode + '\'' +
+                ", major='" + major + '\'' +
+                ", email='" + email + '\'' +
+                ", startYear='" + startYear + '\'' +
+                ", createdTime='" + createdTime + '\'' +
+                ", updatedTime='" + updatedTime + '\'' +
+                '}';
+    }
 
     public Student() {
     }

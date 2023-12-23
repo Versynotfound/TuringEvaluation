@@ -1,7 +1,6 @@
 package com.yuqi.manager;
 
 import com.yuqi.object.Course;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Scanner;
@@ -18,7 +17,7 @@ import java.util.regex.Pattern;
 public class CourseManager {
     private final String COURSE_FILE_PATH = "StudentPerformanceManagementSystem/src/CourseInfo";
     private final Scanner sc = new Scanner(System.in);
-    private final Pattern courseNamePattern = Pattern.compile("[A-Za-z0-9]");
+    private final Pattern courseNamePattern = Pattern.compile("[0-9]");
 
     public void start() throws Exception {
         while (true) {
@@ -30,7 +29,7 @@ public class CourseManager {
             System.out.println("5.退出");
             System.out.println("===================================");
             Thread.sleep(300);
-            
+
             System.out.println("请选择操作：");
             String command = sc.next();
 
@@ -133,13 +132,13 @@ public class CourseManager {
 
                 studyPeriod = inputPeriod;
 
-                Course course = new Course(name, courseId, credit, studyPeriod);
+                Course course = new Course(courseId, name, credit, studyPeriod);
 
                 FileManager.addCourseIntoFile(course);
                 System.out.println("课程信息录入成功！y/Y继续录入，任意键返回");
                 String reply = sc.next();
 
-                if (!(reply.equals("y") || reply.equals("Y"))) {
+                if (!("y".equals(reply) || "Y".equals(reply))) {
                     return;
                 }
                 break;
@@ -191,14 +190,21 @@ public class CourseManager {
             }
 
             Course course = FileManager.getCourseById(inputId);
-            if (inputId.equals(course.getCourseId())) {
-                // 调用方法打印找到的课程信息
-                System.out.println("课程号    课程名    学分 学时");
-                printCourseInfo(course);
-                System.out.println("任意键返回...");
-                sc.next();
+            if(course == null){
+                System.out.println("课程不存在。按y/Y重新输入，任意键退出");
+                String reply = sc.next();
+                if ("y".equals(reply) | "Y".equals(reply)){
+                    continue;
+                }
                 return;
             }
+
+            // 调用方法打印找到的课程信息
+            System.out.println("课程号    课程名    学分 学时");
+            printCourseInfo(course);
+            System.out.println("任意键返回...");
+            sc.next();
+            return;
         }
     }
 
@@ -209,7 +215,7 @@ public class CourseManager {
 
             Matcher nameMatcher = courseNamePattern.matcher(targetName);
 
-            if (!(nameMatcher.find())) {
+            if (nameMatcher.find()) {
                 System.out.println("[课程名格式错误，请重试]");
                 Thread.sleep(200);
                 continue;
@@ -217,21 +223,28 @@ public class CourseManager {
 
             // 支持模糊查询
             List<Course> courses = FileManager.getCourseByName(targetName);
-            if (!(courses.isEmpty())) {
-                System.out.println("找到以下符合条件的结果：");
-                System.out.println("课程号    课程名    学分 学时");
-                for (Course c : courses) {
-                    printCourseInfo(c);
+            if (courses.isEmpty()) {
+                System.out.println("您查找的课程不存在。y/Y重试，任意键退出");
+                String reply = sc.next();
+                if ("y".equals(reply) || "Y".equals(reply)){
+                    continue;
                 }
-
-                System.out.println("任意键返回...");
-                sc.next();
                 return;
             }
+
+            System.out.println("找到以下符合条件的结果：");
+            System.out.println("课程号    课程名    学分 学时");
+            for (Course c : courses) {
+                printCourseInfo(c);
+            }
+
+            System.out.println("任意键返回...");
+            sc.next();
+            return;
         }
     }
 
-    private void printCourseInfo(@NotNull Course course) {
+    private void printCourseInfo(Course course) {
         System.out.println(course.getCourseId() + "\t" + course.getName() + "\t"
                 + course.getCredit() + "\t" + course.getStudyPeriod());
     }
@@ -241,7 +254,7 @@ public class CourseManager {
             System.out.println("[当前系统尚未录入任何课程信息]");
             Thread.sleep(300);
             return;
-        }
+        } 
 
         System.out.println("=============修改课程信息=============");
         while (true) {
@@ -256,7 +269,7 @@ public class CourseManager {
             if (!(FileManager.isFind(inputId, COURSE_FILE_PATH))) {
                 System.out.println("课程不存在，请检查并重新输入。y/Y重新输入，任意键退出");
                 String reply = sc.next();
-                if (reply.equals("y") || reply.equals(("Y"))) {
+                if ("y".equals(reply) || reply.equals(("Y"))) {
                     continue;
                 }
                 return;
@@ -265,8 +278,10 @@ public class CourseManager {
             Course course = FileManager.getCourseById(inputId);
 
             System.out.println("您要修改课程" + course.getName() + "的：");
-            System.out.println("1.学分");
-            System.out.println("2.学时");
+            System.out.println("1.课程名");
+            System.out.println("2.学分");
+            System.out.println("3.学时");
+            System.out.println("4.取消");
             Thread.sleep(200);
             System.out.println("请选择：");
 
@@ -274,11 +289,18 @@ public class CourseManager {
                 String command = sc.next();
                 switch (command) {
                     case "1" -> {
-                        updateCourseCredit(course);
+                        updateCourseName(course);
                         return;
                     }
                     case "2" -> {
+                        updateCourseCredit(course);
+                        return;
+                    }
+                    case "3" -> {
                         updateCoursePeriod(course);
+                        return;
+                    }
+                    case "4" ->{
                         return;
                     }
                     default -> {
@@ -288,6 +310,16 @@ public class CourseManager {
                 }
             }
         }
+    }
+
+    private void updateCourseName(Course course) throws Exception {
+        System.out.println("您要将课程名修改成：");
+        String inputName = sc.next();
+        course.setCourseId(inputName);
+        FileManager.updateCourseInfo(course);
+
+        System.out.println("[修改成功]");
+        Thread.sleep(200);
     }
 
     private synchronized void updateCourseCredit(Course course) throws Exception {
@@ -322,7 +354,7 @@ public class CourseManager {
     }
 
     private synchronized void updateCoursePeriod(Course course) throws Exception {
-        System.out.println("该课程原学时为" + course.getCredit());
+        System.out.println("该课程原学时为" + course.getStudyPeriod());
         while (true) {
             System.out.print("您要将其修改成：");
             String inputPeriod = sc.next();
@@ -352,15 +384,39 @@ public class CourseManager {
             System.out.print("请输入您要删除的课程的课程号：");
             String inputId = sc.next();
 
+            if (!(isCourseIdValid(inputId))){
+                continue;
+            }
+
             Course course = FileManager.getCourseById(inputId);
-            System.out.println("确认删除课程 " + course.getName() + " 吗？y/Y确认，任意键取消");
-            System.out.println("课程关联到成绩和学生，所以这里不会写了。按任意键返回");
-            sc.next();
+            if (course == null){
+                System.out.println("课程不存在。y/Y重新输入，任意键退出");
+                String reply = sc.next();
+                if ("y".equals(reply) || "Y".equals(reply)){
+                    continue;
+                }
+                break;
+            }
+
+            System.out.println("确认删除课程 " + course.getName() + " 吗？y/Y确认，d/D重新输入课程号，任意键取消并返回");
+            String reply = sc.next();
+            if("y".equals(reply) || "Y".equals(reply)){
+                // 把课程文件和成绩文件的该课程号下信息删除
+                FileManager.removeCourseFromFile(inputId);
+                System.out.println("[删除成功]");
+                Thread.sleep(300);
+                break;
+            }
+
+            if("d".equals(reply) || "D".equals(reply)){
+                continue;
+            }
+
             return;
         }
     }
 
-    public static boolean isCourseIdValid(@NotNull String inputCourseId) throws Exception {
+    public static boolean isCourseIdValid(String inputCourseId) throws Exception {
         if (!(inputCourseId.matches("\\d+"))) {
             System.out.println("[课程号格式错误，请重试]");
             Thread.sleep(200);
@@ -369,7 +425,7 @@ public class CourseManager {
         return true;
     }
 
-    public static boolean isStudyPeriodValid(@NotNull String inputPeriod) throws Exception {
+    public static boolean isStudyPeriodValid(String inputPeriod) throws Exception {
         // 假设学时是大于0小于40的整数
         if (!(inputPeriod.matches("[1-9]|[1-3][0-9]"))) {
             System.out.println("[格式错误，请重试]");
@@ -379,4 +435,3 @@ public class CourseManager {
         return true;
     }
 }
-
